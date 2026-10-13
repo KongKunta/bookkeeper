@@ -1,3 +1,6 @@
 pygetwindow
 pandas
 openpyxl
+python-docx
+chromadb 
+sentence-transformers
