@@ -4,3 +4,4 @@ openpyxl
 python-docx
 chromadb 
 sentence-transformers
+pdfplumber
