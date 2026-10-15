@@ -39,7 +39,7 @@ def search_db(target):
     tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")]
     for table in tables:
         for row in db.execute(f'SELECT * FROM "{table}"'):
-            if str(target) in tuple(row):
+            if any(str(target) in str(cell).split() for cell in row if cell):
                 db.close()
                 return dict(row)
     db.close()
