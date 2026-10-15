@@ -12,6 +12,7 @@ def chunk_text(text, size=768, overlap=100):
     return [text[i:i + size] for i in range(0, len(text), size - overlap)]
 
 
+
 def build_vectordb(search_roots):
     for root in search_roots:
         for f in Path(root).rglob("*.docx"):
@@ -26,6 +27,14 @@ def build_vectordb(search_roots):
                 embeddings=vectors.tolist(),
                 metadatas=[{"file": str(f)} for _ in chunks],
             )
+
+
+
+def search_vectordb(query, n_results=3):
+    vector = model.encode("query: " + query)
+    result = collection.query(query_embeddings=[vector.tolist()], n_results=n_results)
+    return [{"file": m["file"], "text": d} for m, d in zip(result["metadatas"][0], result["documents"][0])]
+
 
 
 if __name__ == "__main__":
