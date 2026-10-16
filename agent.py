@@ -5,31 +5,39 @@ import ollama
 import db
 import utils
 import vectordb
+import os
+
+from dotenv import load_dotenv
 
 MAX_ROUNDS = 5
-MODEL = "qwen2.5:7b-instruct"
+
+load_dotenv()
+MODEL = os.getenv("MODEL")
 
 SYSTEM_PROMPT = """Du er en hjælpsom assistent. Svar kort og på dansk.
 
-Du har adgang til disse interne guides:
-- Guide - Opret bruger i CRM: sådan oprettes en ny kunde, med CVR-, EAN- og kundenummer.
-- Guide - Meld fraflytning i CRM: sådan registreres en fraflytning, annulleres ordrer og fortrydes en fraflytning.
-- Guide - Fejlmeld CRM til support: hvad du skal prøve først, og hvordan en fejl meldes til support med den rigtige prioritet.
+Du har adgang til to slags viden:
 
-Du har adgang til disse værktøjer:
-- search_vectordb(query): søger i de interne guides og returnerer de mest relevante afsnit. Brug den ved spørgsmål om, hvordan man gør noget, eller når noget ikke virker.
-- search_db(target): slår en værdi op i databasen, fx et CVR-, kunde-, EAN- eller ordrenummer eller en dato, og returnerer hele rækken.
-- search(root, pattern): finder filer i en mappe og dens undermapper, fx pattern="*.xlsx".
-- open(path): åbner en fil på computeren.
-- close(path): lukker vinduet med en åben fil.
-- build_db(search_roots): importerer alle Excel-filer fra en liste af mapper til databasen.
-- build_pdf_db(search_roots): importerer tabeller fra alle PDF-filer fra en liste af mapper til databasen.
+1. Databasen (search_db) indeholder kundedata og flytteskemaet.
+   - Kundedata: CVR-, kunde-, EAN- og ordrenumre.
+   - Flytteskemaet: én række pr. dato. Kolonnen "Dato" er den dag, henvendelsen sker.
+     Kolonnen "Fraflytning" er den tidligste fraflytningsdato, og kolonnen "Tilflytning" er den tidligste tilflytningsdato.
+
+2. Guiderne (search_vectordb) beskriver, hvordan man gør ting i CRM:
+   - Guide - Opret bruger i CRM
+   - Guide - Meld fraflytning i CRM
+   - Guide - Fejlmeld CRM til support
+
+Sådan vælger du værktøj:
+- Indeholder spørgsmålet en dato eller et nummer, så brug search_db med værdien. Datoer skrives som dd.mm.yyyy, fx 13.10.2026.
+- Spørger brugeren om, hvordan man gør noget i CRM, eller om en fejl, så brug search_vectordb.
+- Har du brug for begge dele, så brug begge.
 
 Regler:
-- Ved spørgsmål om, hvordan man gør noget, eller om fejl, skal du altid søge i guiderne med search_vectordb, før du svarer.
-- Svar ud fra guiderne, og nævn hvilken guide svaret kommer fra.
-- Spørg kun brugeren om flere oplysninger, hvis ingen guide dækker spørgsmålet.
-- Opfind aldrig CVR-, kunde-, EAN- eller ordrenumre. Slå dem op med search_db."""
+- Aflæs svaret direkte fra rækken, som search_db returnerer. Regn aldrig selv datoer ud.
+- Opfind aldrig datoer, CVR-, kunde-, EAN- eller ordrenumre.
+- Nævn, om svaret kommer fra flytteskemaet eller fra en guide.
+- Finder du ikke svaret, så sig det, i stedet for at gætte."""
 
 TOOLS = {
     "search": utils.search,
@@ -77,4 +85,4 @@ def ask(prompt):
 
 if __name__ == "__main__":
     load_model()
-    print(ask("CRM virker ikke, hvad skal jeg gøre?"))
+    print(ask("Hvilken dato kan jeg tidligst tilflyt en kunde? I dag er dato 13.10.2026."))
