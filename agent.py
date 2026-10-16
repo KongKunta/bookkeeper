@@ -67,9 +67,11 @@ def ask(prompt):
 
         if not calls:
             try:
-                call = json.loads(message["content"])
-                if call.get("name") in TOOLS:
-                    calls = [call]
+                content = message["content"]
+                call = json.loads(content[content.find("{"):content.rfind("}") + 1])
+                name = call.get("name") or call.get("tool")
+                if name in TOOLS:
+                    calls = [{"name": name, "arguments": call.get("arguments", {})}]
             except (json.JSONDecodeError, AttributeError):
                 pass
 
