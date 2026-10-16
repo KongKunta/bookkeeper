@@ -34,7 +34,8 @@ Sådan vælger du værktøj:
 - Har du brug for begge dele, så brug begge.
 
 Regler:
-- Aflæs svaret direkte fra rækken, som search_db returnerer. Regn aldrig selv datoer ud.
+- search_db kan returnere flere rækker. Brug rækken, hvor "matched_column" er den kolonne, spørgsmålet handler om, fx "Dato" for dagen henvendelsen sker.
+- Aflæs svaret direkte fra den række. Regn aldrig selv datoer ud.
 - Opfind aldrig datoer, CVR-, kunde-, EAN- eller ordrenumre.
 - Nævn, om svaret kommer fra flytteskemaet eller fra en guide.
 - Finder du ikke svaret, så sig det, i stedet for at gætte."""
