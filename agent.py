@@ -6,6 +6,7 @@ import db
 import utils
 import vectordb
 
+MAX_ROUNDS = 5
 MODEL = "qwen2.5:7b-instruct"
 
 SYSTEM_PROMPT = """Du er en hjælpsom assistent. Svar kort og på dansk.
@@ -50,25 +51,27 @@ def ask(prompt):
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": prompt},
     ]
-    response = ollama.chat(model=MODEL, messages=messages, tools=list(TOOLS.values()))
-    message = response["message"]
-    calls = [c["function"] for c in message.get("tool_calls") or []]
+    for _ in range(MAX_ROUNDS):
+        response = ollama.chat(model=MODEL, messages=messages, tools=list(TOOLS.values()))
+        message = response["message"]
+        calls = [c["function"] for c in message.get("tool_calls") or []]
 
-    if not calls:
-        try:
-            call = json.loads(message["content"])
-            if call.get("name") in TOOLS:
-                calls = [call]
-        except (json.JSONDecodeError, AttributeError):
-            pass
+        if not calls:
+            try:
+                call = json.loads(message["content"])
+                if call.get("name") in TOOLS:
+                    calls = [call]
+            except (json.JSONDecodeError, AttributeError):
+                pass
 
-    if not calls:
-        return message["content"]
+        if not calls:
+            return message["content"]
 
-    messages.append(message)
-    for call in calls:
-        result = TOOLS[call["name"]](**call["arguments"])
-        messages.append({"role": "tool", "content": str(result)})
+        messages.append(message)
+        for call in calls:
+            result = TOOLS[call["name"]](**call["arguments"])
+            messages.append({"role": "tool", "content": str(result)})
+
     return ollama.chat(model=MODEL, messages=messages)["message"]["content"]
 
 
