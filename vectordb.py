@@ -30,7 +30,14 @@ def build_vectordb(search_roots):
 
 
 
-def search_vectordb(query, n_results=3):
+def search_vectordb(query: str, n_results: int = 3):
+    """Søg i de interne guides og returnér de mest relevante afsnit.
+    Brug den ved spørgsmål om, hvordan man gør noget i CRM, eller når noget ikke virker.
+
+    Args:
+        query: Kort søgetekst om emnet, fx "meld fraflytning" eller "CRM virker ikke".
+        n_results: Antal afsnit der returneres.
+    """
     vector = model.encode("query: " + query)
     result = collection.query(query_embeddings=[vector.tolist()], n_results=n_results)
     return [{"file": m["file"], "text": d} for m, d in zip(result["metadatas"][0], result["documents"][0])]
