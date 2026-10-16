@@ -5,7 +5,12 @@ import pandas as pd
 import pdfplumber
 
 
-def build_db(search_roots):
+def build_db(search_roots: list[str]):
+    """Importér alle Excel-filer fra mapperne til databasen. Bruges kun, når databasen skal opdateres.
+
+    Args:
+        search_roots: Liste af mapper, der søges i, fx ["C:/Users/navn/Documents"].
+    """
     db = sqlite3.connect("data.db")
     for root in search_roots:
         for f in Path(root).rglob("*.xlsx"):
@@ -16,7 +21,12 @@ def build_db(search_roots):
     db.close()
 
 
-def build_pdf_db(search_roots):
+def build_pdf_db(search_roots: list[str]):
+    """Importér tabeller fra alle PDF-filer i mapperne til databasen. Bruges kun, når databasen skal opdateres.
+
+    Args:
+        search_roots: Liste af mapper, der søges i, fx ["C:/Users/navn/Documents"].
+    """
     db = sqlite3.connect("data.db")
     for root in search_roots:
         for f in Path(root).rglob("*.pdf"):
@@ -34,6 +44,13 @@ def build_pdf_db(search_roots):
 
 
 def search_db(target):
+    """Slå en værdi op i databasen med kundedata og skemaer, fx flytteskemaet, og returnér hele rækken.
+    Brug den, når spørgsmålet indeholder et CVR-, kunde-, EAN- eller ordrenummer eller en dato.
+
+    Args:
+        target: Værdien der søges efter. CVR-nummer (8 cifre), kundenummer (9 cifre),
+            EAN-nummer (13 cifre), ordrenummer (5 cifre) eller en dato skrevet som dd.mm.yyyy, fx 13.10.2026.
+    """
     db = sqlite3.connect("data.db")
     db.row_factory = sqlite3.Row
     tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")]
