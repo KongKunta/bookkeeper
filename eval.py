@@ -1,4 +1,5 @@
 import csv
+import re
 from datetime import datetime
 
 import agent
@@ -26,9 +27,27 @@ TESTS = [
     ("Kunden med CVR 50717432 ringer. Hvad er deres kundenummer?", "198356259"),
     ("Slå kundenummer 770876131 op og giv mig CVR-nummeret.", "78239848"),
     # Guides
-    ("CRM virker ikke, hvad skal jeg gøre?", "support"),
-    ("Hvordan opretter jeg en ny kunde i CRM?", "Ny kunde"),
+    ("CRM virker ikke, hvad skal jeg gøre?", ["supportportalen"]),
+    ("Hvordan opretter jeg en ny kunde i CRM?", ["Kunder", "Ny kunde"]),
 ]
+
+MONTHS = ["januar", "februar", "marts", "april", "maj", "juni",
+          "juli", "august", "september", "oktober", "november", "december"]
+
+
+def normalize_dates(text):
+    """Skriv datoer som dd.mm.yyyy, fx "5. oktober 2026" og "5.10.2026" bliver til "05.10.2026"."""
+    months = "|".join(MONTHS)
+    text = re.sub(rf"\b(\d{{1,2}})\.? ({months}) (\d{{4}})\b",
+                  lambda m: f"{int(m[1]):02}.{MONTHS.index(m[2].lower()) + 1:02}.{m[3]}", text, flags=re.IGNORECASE)
+    return re.sub(r"\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b", lambda m: f"{int(m[1]):02}.{int(m[2]):02}.{m[3]}", text)
+
+
+def is_correct(answer, expected):
+    """Svaret er korrekt, hvis alle forventede ord står i svaret som hele ord."""
+    terms = [expected] if isinstance(expected, str) else expected
+    answer = normalize_dates(answer)
+    return all(re.search(rf"\b{re.escape(t)}\b", answer, re.IGNORECASE) for t in terms)
 
 
 def run(path=None):
@@ -39,7 +58,7 @@ def run(path=None):
         writer.writerow(["nr", "spørgsmål", "forventet", "korrekt", "svar"])
         for i, (question, expected) in enumerate(TESTS, 1):
             answer = agent.ask(question)
-            ok = expected.lower() in answer.lower()
+            ok = is_correct(answer, expected)
             correct += ok
             writer.writerow([i, question, expected, ok, answer])
             print(f"{i:2}/{len(TESTS)} {'OK ' if ok else 'FEJL'} {question}")
