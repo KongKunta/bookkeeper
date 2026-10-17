@@ -46,6 +46,7 @@ def build_pdf_db(search_roots: list[str]):
 def search_db(target):
     """Slå en værdi op i databasen med kundedata og skemaer, fx flytteskemaet, og returnér alle rækker, hvor værdien findes.
     Hver række har feltet "matched_column", der viser hvilken kolonne værdien stod i.
+    Står værdien i en tabels første kolonne, fx "Dato" eller "CVR", returneres kun de rækker.
     Brug den, når spørgsmålet indeholder et CVR-, kunde-, EAN- eller ordrenummer eller en dato.
 
     Args:
@@ -55,14 +56,18 @@ def search_db(target):
     db = sqlite3.connect("data.db")
     db.row_factory = sqlite3.Row
     tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+    key_matches = []
     matches = []
     for table in tables:
         for row in db.execute(f'SELECT * FROM "{table}"'):
             for column in row.keys():
                 if row[column] and str(target) in str(row[column]).split():
-                    matches.append({"matched_column": column, **dict(row)})
+                    match = {"matched_column": column, **dict(row)}
+                    if column == row.keys()[0]:
+                        key_matches.append(match)
+                    matches.append(match)
     db.close()
-    return matches or [{"error": "No match"}]
+    return key_matches or matches or [{"error": "No match"}]
 
 
 
